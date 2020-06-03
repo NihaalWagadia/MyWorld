@@ -27,5 +27,9 @@
                     android:title="Help"/>
             </menu>
         </item>
+
+        <item
+            android:title="Logout"
+            android:id="@+id/nav_logout"/>
     </group>
 </menu>

@@ -22,6 +22,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
@@ -84,28 +85,36 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-//        switch (item.getItemId()){
-//
-//            case R.id.nav_profile:{
-//                Intent intent = new Intent(this, Profile.class);
-//                Log.d("Clicker","Bait");
-//                startActivity(intent);
-//            }
-//
-//            case R.id.nav_about:{
-//                break;
-//            }
-//
-//            case R.id.nav_help:{
-//                break;
-//            }
-//
-//        }
-        //item.setChecked(true);
+
         int id = item.getItemId();
         if (id == R.id.nav_profile) {
             Intent intent = new Intent(this, Profile.class);
             startActivity(intent);
+        }
+
+
+        else if (id == R.id.nav_about) {
+//            Intent intent = new Intent(this, Profile.class);
+//            startActivity(intent);
+        }
+
+
+        else if (id == R.id.nav_upload) {
+//            Intent intent = new Intent(this, Profile.class);
+//            startActivity(intent);
+        }
+
+
+        else if (id == R.id.nav_help) {
+//            Intent intent = new Intent(this, Profile.class);
+//            startActivity(intent);
+        }
+
+
+        else if (id == R.id.nav_logout) {
+            FirebaseAuth.getInstance().signOut();
+            startActivity(new Intent(getApplicationContext(), Login.class));
+            finish();
         }
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
