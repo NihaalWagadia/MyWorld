@@ -1,6 +1,7 @@
 package com.example.myworld;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
@@ -11,6 +12,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,12 +26,26 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+
+import java.util.Objects;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
     private GoogleMap mMap;
     DrawerLayout drawerLayout;
     NavigationView navigationView;
+    TextView uName;
+    FirebaseFirestore firebaseFirestore;
+    FirebaseAuth firebaseAuth;
+    DocumentReference documentReference;
+    String userId;
+    String namename;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +53,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_maps);
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
+
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -51,6 +70,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //reference to navigation view. To make it work
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        View header = navigationView.getHeaderView(0);
+        uName = header.findViewById(R.id.username_header);
+
+        firebaseAuth = FirebaseAuth.getInstance();
+        firebaseFirestore = FirebaseFirestore.getInstance();
+
+        userId = Objects.requireNonNull(firebaseAuth.getCurrentUser()).getUid();
+
+        documentReference = firebaseFirestore.collection("People").document(userId);
+
+
+//        DocumentReference documentReference = firebaseFirestore.collection("People").document(userId);
+        documentReference.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                assert documentSnapshot != null;
+                if(documentSnapshot!=null) {
+                    namename = documentSnapshot.getString("Name");
+                    uName.setText(namename);
+                }
+            }
+        });
 
     }
 
@@ -90,31 +132,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (id == R.id.nav_profile) {
             Intent intent = new Intent(this, Profile.class);
             startActivity(intent);
-        }
-
-
-        else if (id == R.id.nav_about) {
+        } else if (id == R.id.nav_about) {
 //            Intent intent = new Intent(this, Profile.class);
 //            startActivity(intent);
-        }
-
-
-        else if (id == R.id.nav_upload) {
+        } else if (id == R.id.nav_upload) {
 //            Intent intent = new Intent(this, Profile.class);
 //            startActivity(intent);
-        }
-
-
-        else if (id == R.id.nav_help) {
+        } else if (id == R.id.nav_help) {
 //            Intent intent = new Intent(this, Profile.class);
 //            startActivity(intent);
-        }
-
-
-        else if (id == R.id.nav_logout) {
-            FirebaseAuth.getInstance().signOut();
-            startActivity(new Intent(getApplicationContext(), Login.class));
-            finish();
+        } else if (id == R.id.nav_logout) {
+            FirebaseUser user = firebaseAuth.getCurrentUser();
+            if (user != null) {
+                firebaseAuth.signOut();
+                finish();
+                Intent myIntent = new Intent(getApplicationContext(), Login.class);
+                startActivity(myIntent);
+            }
         }
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
