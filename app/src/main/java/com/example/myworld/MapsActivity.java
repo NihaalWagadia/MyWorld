@@ -45,14 +45,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     FirebaseAuth firebaseAuth;
     DocumentReference documentReference;
     String userId;
-    String namename;
+    String name;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         drawerLayout = findViewById(R.id.drawer_layout);
-        navigationView = findViewById(R.id.nav_view);
+        //navigationView = findViewById(R.id.nav_view);
 
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -82,14 +82,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         documentReference = firebaseFirestore.collection("People").document(userId);
 
 
-//        DocumentReference documentReference = firebaseFirestore.collection("People").document(userId);
         documentReference.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 assert documentSnapshot != null;
                 if(documentSnapshot!=null) {
-                    namename = documentSnapshot.getString("Name");
-                    uName.setText(namename);
+                    name = documentSnapshot.getString("Name");
+                    uName.setText(name);
                 }
             }
         });

@@ -35,21 +35,26 @@ public class Login extends AppCompatActivity {
         loginPassword = findViewById(R.id.login_password);
         loginButton = findViewById(R.id.login_button);
         registerText = findViewById(R.id.go_to_register_text);
-
         firebaseAuth = FirebaseAuth.getInstance();
 
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+    }
+
+    public void registerPage(View v){
+        startActivity(new Intent(getApplicationContext(), Registration.class));
+        finish();
+    }
+
+    public void login(View v) {
+
                 String emailId = loginEmail.getText().toString().trim();
                 String passwordCheck = loginPassword.getText().toString().trim();
 
-                if(TextUtils.isEmpty(emailId)){
+                if (TextUtils.isEmpty(emailId)) {
                     loginEmail.setError("Email is required");
                     return;
                 }
 
-                if(TextUtils.isEmpty(passwordCheck)){
+                if (TextUtils.isEmpty(passwordCheck)) {
                     loginPassword.setError("Password is required");
                     return;
                 }
@@ -59,12 +64,12 @@ public class Login extends AppCompatActivity {
                 firebaseAuth.signInWithEmailAndPassword(emailId, passwordCheck).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        if(task.isSuccessful()){
+                        if (task.isSuccessful()) {
                             Toast.makeText(Login.this, "Welcome back", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(getApplicationContext(), MapsActivity.class));
-                        }
-                        else {
-                            Toast.makeText(Login.this, "Error !!!"+ Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_SHORT).show();
+                            finish();
+                        } else {
+                            Toast.makeText(Login.this, "Error !!!" + Objects.requireNonNull(task.getException()).getMessage(), Toast.LENGTH_SHORT).show();
 
                         }
 
@@ -73,14 +78,8 @@ public class Login extends AppCompatActivity {
 
 
             }
-        });
 
-        registerText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(getApplicationContext(), Registration.class));
-            }
-        });
+
+
 
     }
-}
