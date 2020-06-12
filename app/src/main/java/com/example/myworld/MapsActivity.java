@@ -86,7 +86,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 assert documentSnapshot != null;
-                if(documentSnapshot!=null) {
+                if (documentSnapshot != null) {
                     name = documentSnapshot.getString("Name");
                     uName.setText(name);
                 }
@@ -131,15 +131,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (id == R.id.nav_profile) {
             Intent intent = new Intent(this, Profile.class);
             startActivity(intent);
+
         } else if (id == R.id.nav_about) {
 //            Intent intent = new Intent(this, Profile.class);
 //            startActivity(intent);
+
         } else if (id == R.id.nav_upload) {
-//            Intent intent = new Intent(this, Profile.class);
-//            startActivity(intent);
+            Intent intent = new Intent(this, Upload.class);
+            startActivity(intent);
+
         } else if (id == R.id.nav_help) {
 //            Intent intent = new Intent(this, Profile.class);
 //            startActivity(intent);
+
         } else if (id == R.id.nav_logout) {
             FirebaseUser user = firebaseAuth.getCurrentUser();
             if (user != null) {
