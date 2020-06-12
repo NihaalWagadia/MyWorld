@@ -83,6 +83,7 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
                 updateProfile();
             }
         });
+        //change color of status bar
         Window window = this.getWindow();
 
         // clear FLAG_TRANSLUCENT_STATUS flag:
@@ -164,8 +165,8 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
 //            Intent intent = new Intent(this, Profile.class);
 //            startActivity(intent);
         } else if (id == R.id.nav_upload) {
-//            Intent intent = new Intent(this, Profile.class);
-//            startActivity(intent);
+            Intent intent = new Intent(this, Upload.class);
+            startActivity(intent);
         } else if (id == R.id.nav_help) {
 //            Intent intent = new Intent(this, Profile.class);
 //            startActivity(intent);
