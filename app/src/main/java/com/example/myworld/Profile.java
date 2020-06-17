@@ -49,17 +49,13 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
     String userId;
     FirebaseUser currentUser;
     DrawerLayout drawerLayout;
-    NavigationView navigationView;
     TextView uName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_profile);
-
-
         drawerLayout = findViewById(R.id.drawer_layout_profile);
-        //navigationView = findViewById(R.id.nav_view);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -121,7 +117,6 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
         if (userName.getText().toString().isEmpty() || userEmail.getText().toString().isEmpty()) {
             Toast.makeText(getApplicationContext(), "Empty field", Toast.LENGTH_SHORT).show();
             return;
-
         }
         String userEmailEdit = userEmail.getText().toString();
         currentUser.updateEmail(userEmailEdit).addOnSuccessListener(new OnSuccessListener<Void>() {

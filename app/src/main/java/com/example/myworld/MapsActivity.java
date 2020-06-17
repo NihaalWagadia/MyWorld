@@ -24,15 +24,24 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
@@ -44,15 +53,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     FirebaseFirestore firebaseFirestore;
     FirebaseAuth firebaseAuth;
     DocumentReference documentReference;
+    CollectionReference allLocationRef;
+
     String userId;
     String name;
+    FirebaseUser user;
+    ArrayList<LatLng>latLngs = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         drawerLayout = findViewById(R.id.drawer_layout);
-        //navigationView = findViewById(R.id.nav_view);
 
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -76,6 +88,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseFirestore = FirebaseFirestore.getInstance();
+        allLocationRef = firebaseFirestore.collection("Universal Data");
+
+
 
         userId = Objects.requireNonNull(firebaseAuth.getCurrentUser()).getUid();
 
@@ -93,7 +108,120 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
+        readData(new FireStoreCallback() {
+            @Override
+            public void onCallback(List<LatLng> latLngList) {
+                Log.d("321", String.valueOf(latLngs));
+            }
+        });
+
+
+
     }
+
+    private void readData(final FireStoreCallback fire){
+        allLocationRef.get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                    @Override
+                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                        for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots){
+                            double lati = documentSnapshot.getDouble("Latitude");
+                            double lngi = documentSnapshot.getDouble("Longitude");
+                            LatLng latLng = new LatLng(lati, lngi);
+                            latLngs.add(latLng);
+                            Log.d("123", String.valueOf(latLngs));
+
+                        }
+                        fire.onCallback(latLngs);
+                    }
+                });
+    }
+
+    private interface FireStoreCallback{
+        void onCallback(List<LatLng> latLngList);
+    }
+
+    private void allUsersLocation() {
+
+
+//        allLocationRef.get()
+//                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+//                    @Override
+//                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+//                        for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots){
+//                            double lati = documentSnapshot.getDouble("Latitude");
+//                            double lngi = documentSnapshot.getDouble("Longitude");
+//                            LatLng latLng = new LatLng(lati, lngi);
+//                            latLngs.add(latLng);
+//                            Log.d("123", String.valueOf(latLng));
+//
+//                        }
+//                    }
+//                });
+
+//                firebaseFirestore1.collection("Universal Data").get()
+//                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+//                    @Override
+//                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+//                        if(task.isSuccessful()){
+//                            //latLngs = new ArrayList<>();
+//                            for(QueryDocumentSnapshot queryDocumentSnapshot : Objects.requireNonNull(task.getResult())){
+//                                Log.d("MapsActivity", queryDocumentSnapshot.getId() +
+//                                        "===" + queryDocumentSnapshot.getData());
+//                               // Log.d("material2", String.valueOf(latLngs.size()));
+//                                double lati = queryDocumentSnapshot.getDouble("Latitude");
+//                                double lngi = queryDocumentSnapshot.getDouble("Longitude");
+//                                LatLng latLng = new LatLng(lati, lngi);
+//                                latLngs.add(latLng);
+////                                DocumentReference documentReference1 = firebaseFirestore.collection("Universal Data").document(queryDocumentSnapshot.getId());
+//
+//
+////                                documentReference1.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
+////                                    @Override
+////                                    public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+////                                        //assert documentSnapshot != null;
+////                                        if (documentSnapshot != null) {
+////                                            double lati = documentSnapshot.getDouble("Latitude");
+////                                            double lngi = documentSnapshot.getDouble("Longitude");
+////                                            LatLng latLng = new LatLng(lati, lngi);
+////                                            latLngs.add(latLng);
+////                                            Log.d("Design", String.valueOf(latLngs));
+////                                        }
+////
+////                                    }
+////                                });
+//
+//                               // getLatLng(queryDocumentSnapshot.getId());
+//                                Log.d("Design", String.valueOf(latLngs));
+//
+//                            }
+//                        }
+//                        else{
+//                            Log.d("MapsActivity", "Error:"+ task.getException());
+//                        }
+//
+//                    }
+//                });
+    }
+
+//    private void getLatLng(String id) {
+//        DocumentReference documentReference = firebaseFirestore.collection("Universal Data").document(id);
+//
+//        documentReference.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
+//            @Override
+//            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+//                //assert documentSnapshot != null;
+//                if (documentSnapshot != null) {
+//                    double lati = documentSnapshot.getDouble("Latitude");
+//                    double lngi = documentSnapshot.getDouble("Longitude");
+//                    LatLng latLng = new LatLng(lati, lngi);
+//                    latLngs.add(latLng);
+//                    Log.d("Design", String.valueOf(latLngs));
+//                }
+//
+//            }
+//        });
+//    }
 
     @Override
     public void onBackPressed() {
@@ -116,12 +244,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+
     }
 
     @Override

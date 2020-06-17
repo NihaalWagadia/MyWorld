@@ -53,7 +53,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
     public static String TAG = "Upload";
     private EditText mSearchText;
     FirebaseFirestore firebaseFirestore;
-    DocumentReference documentReference;
+    DocumentReference documentReference, documentReferenceUniversal;
     FirebaseAuth firebaseAuth;
     String userId;
     FirebaseUser currentUser;
@@ -129,14 +129,39 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
 
     private void uploadData() {
 
-        if(mSearchText.getText().toString().isEmpty() ){
+        if (mSearchText.getText().toString().isEmpty()) {
             Toast.makeText(getApplicationContext(), "Enter Location", Toast.LENGTH_SHORT).show();
             return;
         }
+        String latlng = mSearchText.getText().toString();
+        Geocoder geocoder = new Geocoder(this);
+        List<Address>list = new ArrayList<>();
+        try {
+            list = geocoder.getFromLocationName(latlng,1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Address address = list.get(0);
+        double lat = address.getLatitude();
+        double lng = address.getLongitude();
+
+        documentReferenceUniversal = firebaseFirestore.collection("Universal Data").document(userId);
+        Map<String, Object> universalData = new HashMap<>();
+        universalData.put("Global Location", mSearchText.getText().toString());
+        universalData.put("Latitude", lat);
+        universalData.put("Longitude", lng);
+        documentReferenceUniversal.set(universalData).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.d("Check data", "Check Log");
+            }
+        });
 
         documentReference = firebaseFirestore.collection("People").document(userId);
         Map<String, Object> locationData = new HashMap<>();
         locationData.put("Location", mSearchText.getText().toString());
+        locationData.put("Latitude", lat);
+        locationData.put("Longitude", lng);
         documentReference.update(locationData).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -171,7 +196,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
             //initialize status
             Status status = Autocomplete.getStatusFromIntent(Objects.requireNonNull(data));
             //Display Toast
-            Toast.makeText(getApplicationContext(),"Alert"+ status.getStatusMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Alert" + status.getStatusMessage(), Toast.LENGTH_SHORT).show();
             Log.d("Not authorize", status.getStatusMessage());
 
         }
