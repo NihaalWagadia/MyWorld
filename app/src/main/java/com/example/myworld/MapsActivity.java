@@ -18,6 +18,7 @@ import android.widget.TextView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.myworld.model.UserLocation;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -54,18 +55,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     FirebaseAuth firebaseAuth;
     DocumentReference documentReference;
     CollectionReference allLocationRef;
-
     String userId;
     String name;
     FirebaseUser user;
-    ArrayList<LatLng>latLngs = new ArrayList<>();
+    ArrayList<UserLocation>userLocations = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         drawerLayout = findViewById(R.id.drawer_layout);
+        firebaseFirestore = FirebaseFirestore.getInstance();
+        Intent myIntent = getIntent();
+        if (myIntent!= null){
+//            latLngs = myIntent.getParcelableArrayListExtra("collection");
+        }
+//        Log.d("ohhh",String.valueOf(latLngs));
+        allLocationRef = firebaseFirestore.collection("Universal Data");
 
+//        readData(new FireStoreCallback() {
+//            @Override
+//            public void onCallback(List<LatLng> latLngList) {
+//                Log.d("321", String.valueOf(latLngs));
+//            }
+//        });
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -87,15 +100,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         uName = header.findViewById(R.id.username_header);
 
         firebaseAuth = FirebaseAuth.getInstance();
-        firebaseFirestore = FirebaseFirestore.getInstance();
-        allLocationRef = firebaseFirestore.collection("Universal Data");
-
-
-
         userId = Objects.requireNonNull(firebaseAuth.getCurrentUser()).getUid();
-
         documentReference = firebaseFirestore.collection("People").document(userId);
-
 
         documentReference.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
             @Override
@@ -108,34 +114,51 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        readData(new FireStoreCallback() {
+//        Log.d("outside", String.valueOf(latLngs));
+        for(UserLocation lo : userLocations){
+            Log.d("abcd", String.valueOf(lo.getLati()));
+        }
+    }
+
+    private void getUserLocation() {
+        allLocationRef = firebaseFirestore.collection("Universal Data");
+        allLocationRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
-            public void onCallback(List<LatLng> latLngList) {
-                Log.d("321", String.valueOf(latLngs));
+            public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
+                if(queryDocumentSnapshots !=null){
+                    userLocations = new ArrayList<>();
+                    for(QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots){
+                        UserLocation userLocation = documentSnapshot.toObject(UserLocation.class);
+                        userLocations.add(userLocation);
+                        Log.d("abcd", String.valueOf(userLocation.getLati()));
+                        LatLng latLng = new LatLng(userLocation.getLati(), userLocation.getLongi());
+                        mMap.addMarker(new MarkerOptions().position(latLng).title("Location"));
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+
+                    }
+                }
+
             }
         });
 
-
-
     }
 
-    private void readData(final FireStoreCallback fire){
-        allLocationRef.get()
-                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                    @Override
-                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                        for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots){
-                            double lati = documentSnapshot.getDouble("Latitude");
-                            double lngi = documentSnapshot.getDouble("Longitude");
-                            LatLng latLng = new LatLng(lati, lngi);
-                            latLngs.add(latLng);
-                            Log.d("123", String.valueOf(latLngs));
-
-                        }
-                        fire.onCallback(latLngs);
-                    }
-                });
-    }
+//    private void readData(final FireStoreCallback fire){
+//        allLocationRef.get()
+//                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+//                    @Override
+//                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+//                        for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots){
+//                            double lati = documentSnapshot.getDouble("Latitude");
+//                            double lngi = documentSnapshot.getDouble("Longitude");
+//                            LatLng latLng = new LatLng(lati, lngi);
+//                            latLngs.add(latLng);
+//
+//                        }
+//                        fire.onCallback(latLngs);
+//                    }
+//                });
+//    }
 
     private interface FireStoreCallback{
         void onCallback(List<LatLng> latLngList);
@@ -246,11 +269,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+        getUserLocation();
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+//        LatLng sydney = new LatLng(-34, 151);
+//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+//        for(int i=0; i<latLngs.size(); i++){
+//            mMap.addMarker(new MarkerOptions().position(latLngs.get(i)).title("Location"));
+//            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLngs.get(i)));
+//        }
 
     }
 
@@ -259,7 +287,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         int id = item.getItemId();
         if (id == R.id.nav_profile) {
+
             Intent intent = new Intent(this, Profile.class);
+//            intent.putParcelableArrayListExtra("collection", latLngs);
             startActivity(intent);
 
         } else if (id == R.id.nav_about) {
@@ -268,6 +298,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         } else if (id == R.id.nav_upload) {
             Intent intent = new Intent(this, Upload.class);
+//            intent.putParcelableArrayListExtra("collection", latLngs);
             startActivity(intent);
 
         } else if (id == R.id.nav_help) {
@@ -280,6 +311,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 firebaseAuth.signOut();
                 finish();
                 Intent myIntent = new Intent(getApplicationContext(), Login.class);
+//                myIntent.putParcelableArrayListExtra("collection", latLngs);
                 startActivity(myIntent);
             }
         }

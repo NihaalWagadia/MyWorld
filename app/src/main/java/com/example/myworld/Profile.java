@@ -3,6 +3,7 @@ package com.example.myworld;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -35,6 +36,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -50,6 +52,8 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
     FirebaseUser currentUser;
     DrawerLayout drawerLayout;
     TextView uName;
+    ArrayList<LatLng> latLngArrayList = new ArrayList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +62,11 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
         drawerLayout = findViewById(R.id.drawer_layout_profile);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        Intent myIntent = getIntent();
+        if(myIntent!=null) {
+//            latLngArrayList = myIntent.getParcelableArrayListExtra("collection");
+        }
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -132,6 +141,7 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
                     public void onSuccess(Void aVoid) {
                         Toast.makeText(getApplicationContext(), "Profile Updated", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+//                        intent.putParcelableArrayListExtra("collection", latLngArrayList);
                         startActivity(intent);
                         finish();
                     }

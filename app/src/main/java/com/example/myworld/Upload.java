@@ -23,9 +23,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.myworld.model.UserLocation;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.Autocomplete;
@@ -61,6 +65,10 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
     TextView uName;
     TextView locationResult;
     Button uploadButton;
+    ArrayList<LatLng> latLngArrayList = new ArrayList<>();
+    private UserLocation userLocation;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +80,9 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         uploadButton = findViewById(R.id.upload_button);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        Intent myIntent = getIntent();
+        latLngArrayList = myIntent.getParcelableArrayListExtra("collection");
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -121,6 +132,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 uploadData();
             }
         });
@@ -144,16 +156,23 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         Address address = list.get(0);
         double lat = address.getLatitude();
         double lng = address.getLongitude();
+//        userLocation.setLati(lat);
+//        userLocation.setLati(lng);
+//        userLocation.setUserId(userId);
+        UserLocation userLocation1 = new UserLocation(lat, lng, userId);
 
         documentReferenceUniversal = firebaseFirestore.collection("Universal Data").document(userId);
-        Map<String, Object> universalData = new HashMap<>();
-        universalData.put("Global Location", mSearchText.getText().toString());
-        universalData.put("Latitude", lat);
-        universalData.put("Longitude", lng);
-        documentReferenceUniversal.set(universalData).addOnSuccessListener(new OnSuccessListener<Void>() {
+//        Map<String, Object> universalData = new HashMap<>();
+//        universalData.put("Global Location", mSearchText.getText().toString());
+//        universalData.put("Latitude", lat);
+//        universalData.put("Longitude", lng);
+
+        documentReferenceUniversal.set(userLocation1).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
-            public void onSuccess(Void aVoid) {
-                Log.d("Check data", "Check Log");
+            public void onComplete(@NonNull Task<Void> task) {
+                if(task.isSuccessful()){
+                    Log.d("Checker", "checker");
+                }
             }
         });
 
@@ -167,6 +186,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
             public void onSuccess(Void aVoid) {
                 Toast.makeText(getApplicationContext(), "Location Updated", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+//                intent.putParcelableArrayListExtra("collection", latLngArrayList);
                 startActivity(intent);
                 finish();
             }
