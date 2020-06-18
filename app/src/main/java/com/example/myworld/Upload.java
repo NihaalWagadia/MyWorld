@@ -5,13 +5,19 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.LoginFilter;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -20,6 +26,7 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -64,9 +71,11 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
     DrawerLayout drawerLayout;
     TextView uName;
     TextView locationResult;
-    Button uploadButton;
+    Button uploadButton, imageButton;
     ArrayList<LatLng> latLngArrayList = new ArrayList<>();
     private UserLocation userLocation;
+    ImageView imageView;
+
 
 
 
@@ -78,6 +87,8 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         locationResult = findViewById(R.id.output_location);
         drawerLayout = findViewById(R.id.drawer_layout_upload);
         uploadButton = findViewById(R.id.upload_button);
+        imageButton = findViewById(R.id.button_camera);
+        imageView = findViewById(R.id.image_captured);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -113,7 +124,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         });
 
         //Initializing places
-        Places.initialize(getApplicationContext(), "");
+        Places.initialize(getApplicationContext(), );
         // Set EditText not focusable
         mSearchText.setFocusable(false);
         mSearchText.setOnClickListener(new View.OnClickListener() {
@@ -129,6 +140,24 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
             }
         });
 
+        //request for camera
+        if(ContextCompat.checkSelfPermission(Upload.this,
+        Manifest.permission.CAMERA) !=PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(Upload.this,
+                    new String[]{
+                            Manifest.permission.CAMERA
+                    },100);
+        }
+
+        imageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //open camera
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(intent, 1000);
+            }
+        });
+
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -138,6 +167,8 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         });
 
     }
+
+
 
     private void uploadData() {
 
@@ -211,6 +242,8 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
             mSearchText.setText(place.getAddress());
             //set Locality name
             locationResult.setText(String.format("Locality Name : %s", place.getName()));
+
+
         } else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
             //when error
             //initialize status
@@ -221,44 +254,14 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
 
         }
 
+        else if(requestCode ==1000){
+            Bitmap captureImage = (Bitmap) data.getExtras().get("data");
+            //if(captureImage!=null){
+                imageView.setImageBitmap(captureImage);
+
+        }
+
     }
-
-
-    //    private void searchAddress(){
-//        Log.d(TAG, "searchAddress: Ready");
-//
-//        mSearchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-//            @Override
-//            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
-//                if(actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE
-//                ||keyEvent.getAction() == KeyEvent.ACTION_DOWN
-//                ||keyEvent.getAction() == KeyEvent.KEYCODE_ENTER){
-//                    //search function will get started here
-//                    geoLocate();
-//                }
-//                return false;
-//            }
-//        });
-//
-//    }
-
-//    private void geoLocate(){
-//        Log.d(TAG, "geolocate: locationg");
-//        String search = mSearchText.getText().toString();
-//        Geocoder geocoder = new Geocoder(Upload.this);
-//        List<Address> list = new ArrayList<>();
-//        try{
-//            list = geocoder.getFromLocationName(search, 1);
-//        }
-//        catch (IOException e){
-//            Log.d(TAG, "IOException" + e.getMessage());
-//        }
-//        if(list.size()>0){
-//            Address address = list.get(0);
-//            Log.d(TAG, "Found  location of search"+ address.toString());
-//        }
-//
-//    }
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
