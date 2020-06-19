@@ -7,16 +7,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import android.Manifest;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.location.Address;
 import android.location.Geocoder;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.LoginFilter;
 import android.util.Log;
@@ -24,9 +29,12 @@ import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.HttpAuthHandler;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,10 +58,17 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +90,14 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
     ArrayList<LatLng> latLngArrayList = new ArrayList<>();
     private UserLocation userLocation;
     ImageView imageView;
+    Uri imageUri;
+    StorageReference storageReference;
+    ProgressBar progressBar;
+    Uri imageString;
+    String nameFetch;
+    String currentPhotoPath;
+
+
 
 
 
@@ -89,6 +112,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         uploadButton = findViewById(R.id.upload_button);
         imageButton = findViewById(R.id.button_camera);
         imageView = findViewById(R.id.image_captured);
+        progressBar = findViewById(R.id.progress_bar);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -108,6 +132,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
 
         firebaseAuth = FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
+        storageReference = FirebaseStorage.getInstance().getReference("uploads");
 
         firebaseFirestore = FirebaseFirestore.getInstance();
         userId = Objects.requireNonNull(firebaseAuth.getCurrentUser()).getUid();
@@ -119,12 +144,13 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
                 assert documentSnapshot != null;
                 if (documentSnapshot != null) {
                     uName.setText(documentSnapshot.getString("Name"));
+                    nameFetch = documentSnapshot.getString("Name");
                 }
             }
         });
 
         //Initializing places
-        Places.initialize(getApplicationContext(), );
+        Places.initialize(getApplicationContext(), "AIzaSyAeLlV3mcE3o0ouo5RKcUYUevZ--OCAXk8");
         // Set EditText not focusable
         mSearchText.setFocusable(false);
         mSearchText.setOnClickListener(new View.OnClickListener() {
@@ -153,8 +179,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
             @Override
             public void onClick(View view) {
                 //open camera
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(intent, 1000);
+                dispatchTakePictureIntent();
             }
         });
 
@@ -176,6 +201,49 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
             Toast.makeText(getApplicationContext(), "Enter Location", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        if(imageUri==null){
+            Toast.makeText(getApplicationContext(), "Please Upload image", Toast.LENGTH_SHORT).show();
+            return;
+        }
+//        //to get the extension of the file
+//        StorageReference fileRef = storageReference.child(System.currentTimeMillis()
+//        + "." + getFileExtension(imageUri));
+
+
+//        fileRef.putFile(imageUri)
+//                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//                    @Override
+//                    public void onSuccess(final UploadTask.TaskSnapshot taskSnapshot) {
+//                        Handler handler = new Handler();
+//                        handler.postDelayed(new Runnable() {
+//                            @Override
+//                            public void run() {
+//
+//                                progressBar.setProgress(0);
+//                            }
+//                        }, 2000);
+//
+//                        imageString =  taskSnapshot.getUploadSessionUri();
+//
+//                     }
+//                })
+//                .addOnFailureListener(new OnFailureListener() {
+//                    @Override
+//                    public void onFailure(@NonNull Exception e) {
+//                        Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+//
+//                    }
+//                })
+//                .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+//            @Override
+//            public void onProgress(@NonNull UploadTask.TaskSnapshot taskSnapshot) {
+//                double progress = (100.0 * taskSnapshot.getBytesTransferred()/taskSnapshot.getTotalByteCount());
+//                progressBar.setProgress((int)progress);
+//            }
+//        });
+
+
         String latlng = mSearchText.getText().toString();
         Geocoder geocoder = new Geocoder(this);
         List<Address>list = new ArrayList<>();
@@ -187,10 +255,11 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         Address address = list.get(0);
         double lat = address.getLatitude();
         double lng = address.getLongitude();
+
 //        userLocation.setLati(lat);
 //        userLocation.setLati(lng);
 //        userLocation.setUserId(userId);
-        UserLocation userLocation1 = new UserLocation(lat, lng, userId);
+
 
         documentReferenceUniversal = firebaseFirestore.collection("Universal Data").document(userId);
 //        Map<String, Object> universalData = new HashMap<>();
@@ -198,6 +267,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
 //        universalData.put("Latitude", lat);
 //        universalData.put("Longitude", lng);
 
+        UserLocation userLocation1 = new UserLocation(lat, lng, userId, imageString, nameFetch);
         documentReferenceUniversal.set(userLocation1).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -212,6 +282,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         locationData.put("Location", mSearchText.getText().toString());
         locationData.put("Latitude", lat);
         locationData.put("Longitude", lng);
+        locationData.put("imageUrl", imageString);
         documentReference.update(locationData).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -230,6 +301,19 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         });
 
     }
+
+    private void dispatchTakePictureIntentdd() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//        intent.setType("image/*");
+        //intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(intent,1000);
+    }
+
+//    private String getFileExtension(Uri uri){
+//        ContentResolver contentResolver = getContentResolver();
+//        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+//        return mimeTypeMap.getExtensionFromMimeType(contentResolver.getType(uri));
+//    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -254,14 +338,67 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
 
         }
 
-        else if(requestCode ==1000){
-            Bitmap captureImage = (Bitmap) data.getExtras().get("data");
-            //if(captureImage!=null){
-                imageView.setImageBitmap(captureImage);
+        if(requestCode ==1000 && resultCode == RESULT_OK ){
+//            Bitmap captureImage = (Bitmap) data.getExtras().get("data");
+//            //if(captureImage!=null){
+//            imageUri = data.getData();
+//            Log.d("imageuri", String.valueOf(data));
+//            imageView.setImageBitmap(captureImage);
+            File f = new File(currentPhotoPath);
+            imageView.setImageURI(Uri.fromFile(f));
+//            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            Uri contentUri = Uri.fromFile(f);
+            uploadImageToFireBase(f.getName(), contentUri);
 
         }
 
     }
+
+    private void uploadImageToFireBase(String name, Uri contentUri) {
+
+    }
+
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, 1000);
+            }
+        }
+    }
+
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
