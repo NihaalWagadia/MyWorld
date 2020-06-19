@@ -150,7 +150,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         });
 
         //Initializing places
-        Places.initialize(getApplicationContext(), "AIzaSyAeLlV3mcE3o0ouo5RKcUYUevZ--OCAXk8");
+        Places.initialize(getApplicationContext(), "");
         // Set EditText not focusable
         mSearchText.setFocusable(false);
         mSearchText.setOnClickListener(new View.OnClickListener() {
