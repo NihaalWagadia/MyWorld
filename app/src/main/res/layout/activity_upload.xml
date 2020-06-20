@@ -29,7 +29,7 @@
             android:id="@+id/relative"
             android:layout_width="match_parent"
             android:layout_height="50dp">
-            
+
 
             <ImageView
                 android:id="@+id/ic_magnify"
@@ -50,9 +50,50 @@
                 android:imeOptions="actionSearch"
                 android:singleLine="true"
                 android:textColor="#000"
-                android:textSize="20dp" />
+                android:textSize="20dp"
+                android:gravity="center"
+                android:textAlignment="center"/>
+
 
         </RelativeLayout>
+
+        <TextView
+            android:id="@+id/output_location"
+            android:layout_width="match_parent"
+            android:layout_height="50dp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/button_camera"
+            android:text="Take picture"
+            android:layout_gravity="center"
+            android:layout_marginTop="20dp"/>
+
+        <ImageView
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:id="@+id/image_captured"
+            android:layout_marginTop="20dp"
+            android:elevation="20dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:layout_gravity="center"
+            app:srcCompat="@drawable/ic_launcher_background"
+            android:scaleType="fitXY"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:elevation="50dp"
+            android:text="Done"
+            android:id="@+id/upload_button"
+            android:layout_gravity="bottom|center"
+            android:layout_marginTop="20dp"
+
+            />
 
 
     </LinearLayout>
