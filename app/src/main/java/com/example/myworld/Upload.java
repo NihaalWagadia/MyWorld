@@ -74,6 +74,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import id.zelory.compressor.Compressor;
+
 public class Upload extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     public static String TAG = "Upload";
@@ -88,18 +90,12 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
     TextView locationResult;
     Button uploadButton, imageButton;
     ArrayList<LatLng> latLngArrayList = new ArrayList<>();
-    private UserLocation userLocation;
     ImageView imageView;
-    Uri imageUri;
     StorageReference storageReference;
-    ProgressBar progressBar;
-    Uri imageString;
+    String imageString;
     String nameFetch;
     String currentPhotoPath;
-
-
-
-
+    Compressor compressor;
 
 
     @Override
@@ -112,7 +108,6 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         uploadButton = findViewById(R.id.upload_button);
         imageButton = findViewById(R.id.button_camera);
         imageView = findViewById(R.id.image_captured);
-        progressBar = findViewById(R.id.progress_bar);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -132,7 +127,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
 
         firebaseAuth = FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
-        storageReference = FirebaseStorage.getInstance().getReference("uploads");
+        storageReference = FirebaseStorage.getInstance().getReference();
 
         firebaseFirestore = FirebaseFirestore.getInstance();
         userId = Objects.requireNonNull(firebaseAuth.getCurrentUser()).getUid();
@@ -150,7 +145,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         });
 
         //Initializing places
-        Places.initialize(getApplicationContext(), "");
+        Places.initialize(getApplicationContext(), );
         // Set EditText not focusable
         mSearchText.setFocusable(false);
         mSearchText.setOnClickListener(new View.OnClickListener() {
@@ -201,47 +196,13 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
             Toast.makeText(getApplicationContext(), "Enter Location", Toast.LENGTH_SHORT).show();
             return;
         }
+        Log.d("ima", imageString.toString());
 
-        if(imageUri==null){
+        if(imageString==null){
+            Log.d("ima2", imageString.toString());
             Toast.makeText(getApplicationContext(), "Please Upload image", Toast.LENGTH_SHORT).show();
             return;
         }
-//        //to get the extension of the file
-//        StorageReference fileRef = storageReference.child(System.currentTimeMillis()
-//        + "." + getFileExtension(imageUri));
-
-
-//        fileRef.putFile(imageUri)
-//                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-//                    @Override
-//                    public void onSuccess(final UploadTask.TaskSnapshot taskSnapshot) {
-//                        Handler handler = new Handler();
-//                        handler.postDelayed(new Runnable() {
-//                            @Override
-//                            public void run() {
-//
-//                                progressBar.setProgress(0);
-//                            }
-//                        }, 2000);
-//
-//                        imageString =  taskSnapshot.getUploadSessionUri();
-//
-//                     }
-//                })
-//                .addOnFailureListener(new OnFailureListener() {
-//                    @Override
-//                    public void onFailure(@NonNull Exception e) {
-//                        Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-//
-//                    }
-//                })
-//                .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-//            @Override
-//            public void onProgress(@NonNull UploadTask.TaskSnapshot taskSnapshot) {
-//                double progress = (100.0 * taskSnapshot.getBytesTransferred()/taskSnapshot.getTotalByteCount());
-//                progressBar.setProgress((int)progress);
-//            }
-//        });
 
 
         String latlng = mSearchText.getText().toString();
@@ -256,24 +217,22 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         double lat = address.getLatitude();
         double lng = address.getLongitude();
 
-//        userLocation.setLati(lat);
-//        userLocation.setLati(lng);
-//        userLocation.setUserId(userId);
-
 
         documentReferenceUniversal = firebaseFirestore.collection("Universal Data").document(userId);
-//        Map<String, Object> universalData = new HashMap<>();
-//        universalData.put("Global Location", mSearchText.getText().toString());
-//        universalData.put("Latitude", lat);
-//        universalData.put("Longitude", lng);
 
-        UserLocation userLocation1 = new UserLocation(lat, lng, userId, imageString, nameFetch);
+
+        UserLocation userLocation1 = new UserLocation(lat, lng, userId, imageString.toString(), nameFetch);
         documentReferenceUniversal.set(userLocation1).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if(task.isSuccessful()){
                     Log.d("Checker", "checker");
                 }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d("fail", e.getMessage());
             }
         });
 
@@ -302,18 +261,6 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
 
     }
 
-    private void dispatchTakePictureIntentdd() {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//        intent.setType("image/*");
-        //intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(intent,1000);
-    }
-
-//    private String getFileExtension(Uri uri){
-//        ContentResolver contentResolver = getContentResolver();
-//        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-//        return mimeTypeMap.getExtensionFromMimeType(contentResolver.getType(uri));
-//    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -339,15 +286,11 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         }
 
         if(requestCode ==1000 && resultCode == RESULT_OK ){
-//            Bitmap captureImage = (Bitmap) data.getExtras().get("data");
-//            //if(captureImage!=null){
-//            imageUri = data.getData();
-//            Log.d("imageuri", String.valueOf(data));
-//            imageView.setImageBitmap(captureImage);
             File f = new File(currentPhotoPath);
             imageView.setImageURI(Uri.fromFile(f));
 //            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
             Uri contentUri = Uri.fromFile(f);
+            imageString = contentUri.toString();
             uploadImageToFireBase(f.getName(), contentUri);
 
         }
@@ -355,6 +298,28 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
     }
 
     private void uploadImageToFireBase(String name, Uri contentUri) {
+        final StorageReference imageToFireData = storageReference.child("images/" + name);
+
+        //Compressor compressor = new Compressor(this).compressToFile(contentUri);
+        imageToFireData.putFile(contentUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                imageToFireData.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        Log.d("tag", uri.toString());
+                    }
+                });
+
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(getApplicationContext(), "Upload Fail", Toast.LENGTH_SHORT).show();
+
+            }
+        });
+
 
     }
 
