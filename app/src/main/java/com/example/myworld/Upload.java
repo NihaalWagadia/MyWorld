@@ -63,6 +63,7 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -145,7 +146,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         });
 
         //Initializing places
-        Places.initialize(getApplicationContext(), );
+        Places.initialize(getApplicationContext(), ");
         // Set EditText not focusable
         mSearchText.setFocusable(false);
         mSearchText.setOnClickListener(new View.OnClickListener() {
@@ -301,26 +302,55 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         final StorageReference imageToFireData = storageReference.child("images/" + name);
 
         //Compressor compressor = new Compressor(this).compressToFile(contentUri);
-        imageToFireData.putFile(contentUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                imageToFireData.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                    @Override
-                    public void onSuccess(Uri uri) {
-                        Log.d("tag", uri.toString());
-                    }
-                });
+//        imageToFireData.putFile(contentUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//            @Override
+//            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                imageToFireData.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//                    @Override
+//                    public void onSuccess(Uri uri) {
+//                        Log.d("tag", uri.toString());
+//                    }
+//                });
+//
+//            }
+//        }).addOnFailureListener(new OnFailureListener() {
+//            @Override
+//            public void onFailure(@NonNull Exception e) {
+//                Toast.makeText(getApplicationContext(), "Upload Fail", Toast.LENGTH_SHORT).show();
+//
+//            }
+//        });
 
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(getApplicationContext(), "Upload Fail", Toast.LENGTH_SHORT).show();
+        File actualImage = new File(contentUri.getPath());
+        try {
+            Bitmap compressToFile = new Compressor(this)
+                    .setMaxWidth(640)
+                    .setMaxHeight(480)
+                    .setQuality(75)
+                    .compressToBitmap(actualImage);
 
-            }
-        });
+            ByteArrayOutputStream boas = new ByteArrayOutputStream();
+            compressToFile.compress(Bitmap.CompressFormat.JPEG, 100, boas);
+            byte[] data = boas.toByteArray();
+            UploadTask uploadTask = imageToFireData.putBytes(data);
+            uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    Log.d("Succes", taskSnapshot.toString());
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                                    Toast.makeText(getApplicationContext(), "Upload Fail", Toast.LENGTH_SHORT).show();
+                                    Log.d("onFail", e.getMessage());
+
+                }
+            });
 
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
