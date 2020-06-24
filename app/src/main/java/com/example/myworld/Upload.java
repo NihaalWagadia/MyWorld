@@ -3,6 +3,7 @@ package com.example.myworld;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -13,6 +14,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import android.Manifest;
 import android.content.ContentResolver;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -80,7 +82,7 @@ import id.zelory.compressor.Compressor;
 public class Upload extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     public static String TAG = "Upload";
-    private EditText mSearchText;
+     EditText mSearchText;
     FirebaseFirestore firebaseFirestore;
     DocumentReference documentReference, documentReferenceUniversal;
     FirebaseAuth firebaseAuth;
@@ -97,6 +99,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
     String nameFetch;
     String currentPhotoPath;
     Compressor compressor;
+    private int STORAGE_CAMERA = 1010;
 
 
     @Override
@@ -146,7 +149,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         });
 
         //Initializing places
-        Places.initialize(getApplicationContext(), ");
+        Places.initialize(getApplicationContext(), "");
         // Set EditText not focusable
         mSearchText.setFocusable(false);
         mSearchText.setOnClickListener(new View.OnClickListener() {
@@ -162,34 +165,70 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
             }
         });
 
-        //request for camera
-        if(ContextCompat.checkSelfPermission(Upload.this,
-        Manifest.permission.CAMERA) !=PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(Upload.this,
-                    new String[]{
-                            Manifest.permission.CAMERA
-                    },100);
-        }
+//        //request for camera
+//        if(ContextCompat.checkSelfPermission(Upload.this,
+//        Manifest.permission.CAMERA) !=PackageManager.PERMISSION_GRANTED){
+//            ActivityCompat.requestPermissions(Upload.this,
+//                    new String[]{
+//                            Manifest.permission.CAMERA
+//                    },100);
+//        }
 
         imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //open camera
-                dispatchTakePictureIntent();
+                requestCameraPermission();
+//                dispatchTakePictureIntent();
             }
         });
 
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 uploadData();
             }
         });
 
     }
 
+    private void requestCameraPermission() {
+        if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)){
 
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission needed")
+                    .setMessage("To Upload the image")
+                    .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                            ActivityCompat.requestPermissions(Upload.this, new String[]{Manifest.permission.CAMERA}, STORAGE_CAMERA);
+                        }
+                    }).setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+
+                }
+            }).create().show();
+
+        }
+        else{
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, STORAGE_CAMERA);
+
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == STORAGE_CAMERA){
+            if(grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                dispatchTakePictureIntent();
+            }
+            else{
+                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
     private void uploadData() {
 
@@ -269,7 +308,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
         if (requestCode == 100 && resultCode == RESULT_OK) {
             //when success
             //initialize place
-            Place place = Autocomplete.getPlaceFromIntent(Objects.requireNonNull(data));
+            Place place = Autocomplete.getPlaceFromIntent((data));
             //set address on EditText
             mSearchText.setText(place.getAddress());
             //set Locality name
@@ -285,7 +324,7 @@ public class Upload extends AppCompatActivity implements NavigationView.OnNaviga
             Log.d("Not authorize", status.getStatusMessage());
 
         }
-
+        //cut paste this part in request permission
         if(requestCode ==1000 && resultCode == RESULT_OK ){
             File f = new File(currentPhotoPath);
             imageView.setImageURI(Uri.fromFile(f));
