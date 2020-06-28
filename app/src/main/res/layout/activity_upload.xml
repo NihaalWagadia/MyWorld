@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
+    android:background="#0B0A0A"
     tools:openDrawer="start">
 
 
@@ -17,7 +18,7 @@
         android:layout_marginLeft="10dp"
         android:layout_marginTop="10dp"
         android:layout_marginRight="10dp"
-        android:background="@drawable/border"
+        android:background="#0B0A0A"
         android:elevation="10dp"
         android:orientation="vertical">
 
@@ -28,7 +29,12 @@
         <RelativeLayout
             android:id="@+id/relative"
             android:layout_width="match_parent"
-            android:layout_height="50dp">
+            android:layout_height="50dp"
+            android:background="@drawable/textview_border"
+            android:textColorHint="#090808"
+            android:textColor="#090808"
+            android:padding="5dp"
+            >
 
 
             <ImageView
@@ -49,7 +55,7 @@
                 android:hint="Enter city, state or zip code"
                 android:imeOptions="actionSearch"
                 android:singleLine="true"
-                android:textColor="#000"
+                android:textColor="#090808"
                 android:textSize="20dp"
                 android:gravity="center"
                 android:textAlignment="center"/>
@@ -63,12 +69,13 @@
             android:layout_height="50dp" />
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:id="@+id/button_camera"
             android:text="Take picture"
             android:layout_gravity="center"
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="20dp"
+            android:background="@drawable/rounded_button"/>
 
         <ImageView
             android:layout_width="300dp"
@@ -82,17 +89,18 @@
             android:paddingBottom="10dp"
             android:layout_gravity="center"
             app:srcCompat="@drawable/ic_launcher_background"
-            android:scaleType="fitXY"/>
+            android:scaleType="fitXY"
+            />
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:elevation="50dp"
             android:text="Done"
             android:id="@+id/upload_button"
             android:layout_gravity="bottom|center"
             android:layout_marginTop="20dp"
-
+            android:background="@drawable/rounded_button"
             />
 
 

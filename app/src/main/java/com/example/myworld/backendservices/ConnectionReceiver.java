@@ -1,4 +1,4 @@
-package com.example.myworld;
+package com.example.myworld.backendservices;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

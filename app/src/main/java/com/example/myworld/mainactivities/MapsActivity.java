@@ -1,15 +1,18 @@
-package com.example.myworld;
+package com.example.myworld.mainactivities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.FragmentActivity;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
@@ -19,8 +22,13 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
-import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.myworld.backendservices.CustomInfoWindowAdapter;
+import com.example.myworld.backendservices.ManualChecker;
+import com.example.myworld.adapter.MyItem;
+import com.example.myworld.backendservices.Offline;
+import com.example.myworld.R;
+import com.example.myworld.backendservices.ConnectionReceiver;
 import com.example.myworld.model.UserLocation;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,10 +36,6 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
@@ -42,18 +46,14 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.maps.android.clustering.ClusterManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import id.zelory.compressor.Compressor;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener, ConnectionReceiver.ConnectivityReceiverListener {
 
@@ -70,10 +70,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     Map<LatLng, String> markerDetailsName = new HashMap<>();
     Map<LatLng, String> markerDetailsImage = new HashMap<>();
     private ClusterManager<MyItem> clusterManager;
-    //private List<MyItem>items = new ArrayList<>();
+    private int CODE = 1001;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)   {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -81,8 +81,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         allLocationRef = firebaseFirestore.collection("Universal Data");
         //check connection manually
         checkInternetConnection();
-
-
+        storagePermission();
 
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -119,24 +118,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        for (UserLocation lo : userLocations) {
-            Log.d("abcd", String.valueOf(lo.getLati()));
+    }
+
+    private void storagePermission() {
+        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                permissions[0]) == PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                permissions[1]) == PackageManager.PERMISSION_GRANTED) {
+            Log.d("Permission Storage", "GRANTED");
+
+        } else {
+            ActivityCompat.requestPermissions(MapsActivity.this, permissions, CODE);
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        storagePermission();
     }
 
     private void checkInternetConnection() {
         boolean isConnected = ConnectionReceiver.isConnected();
         showSnackBar(isConnected);
-
-        if(!isConnected){
+        if (!isConnected) {
             changeActivity();
         }
     }
 
     private void changeActivity() {
 
-            Intent intent = new Intent(this, Offline.class);
-            startActivity(intent);
+        Intent intent = new Intent(this, Offline.class);
+        startActivity(intent);
 
     }
 
@@ -145,7 +159,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onResume();
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-
         ConnectionReceiver connectionReceiver = new ConnectionReceiver();
         registerReceiver(connectionReceiver, intentFilter);
         //register connection status listener
@@ -155,11 +168,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void showSnackBar(boolean isConnected) {
         String message;
         int color;
-        if(isConnected){
+        if (isConnected) {
             message = "You online";
             color = Color.WHITE;
-        }
-        else{
+        } else {
             message = "check internet";
             color = Color.RED;
         }
@@ -178,27 +190,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (queryDocumentSnapshots != null) {
                     userLocations = new ArrayList<>();
                     for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
-
                         UserLocation userLocation = documentSnapshot.toObject(UserLocation.class);
                         userLocations.add(userLocation);
-                        Log.d("abcd", String.valueOf(userLocation.getLati()));
                         LatLng latLng = new LatLng(userLocation.getLati(), userLocation.getLongi());
-                        // customInfoWindowAdapter = new CustomInfoWindowAdapter(getApplicationContext(), userLocation.getUserName(), userLocation.getImageId());
-
                         markerDetailsName.put(latLng, userLocation.getUserName());
                         markerDetailsImage.put(latLng, userLocation.getImageId());
-                        //mMap.addMarker(new MarkerOptions().position(latLng));
-//                        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-//                        items.add(new MyItem(latLng));
-//                        clusterManager.addItem(items);
-                        MyItem offsetItem = new MyItem(latLng);
+                        MyItem offsetItem = new MyItem(latLng, userLocation.getUserName(), userLocation.getImageId());
                         clusterManager.addItem(offsetItem);
                         clusterManager.cluster();
 
                     }
                 }
-
-
             }
         });
 
@@ -230,7 +232,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         mMap.setMinZoomPreference(2.0f); // Set a preference for minimum zoom (Zoom out).
         mMap.setMaxZoomPreference(16.0f);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(51.503186, -0.126446),1));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(51.503186, -0.126446), 1));
         clusterManager = new ClusterManager<>(this, mMap);
         mMap.setOnCameraIdleListener(clusterManager);
         mMap.setOnMarkerClickListener(clusterManager);
@@ -252,20 +254,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
         int id = item.getItemId();
-        if (id == R.id.nav_profile) {
-
-            Intent intent = new Intent(this, Profile.class);
-            startActivity(intent);
-
-        } else if (id == R.id.nav_about) {
-
-
-        } else if (id == R.id.nav_upload) {
+        if (id == R.id.nav_upload) {
             Intent intent = new Intent(this, Upload.class);
             startActivity(intent);
-
-        } else if (id == R.id.nav_help) {
-
 
         } else if (id == R.id.nav_logout) {
             FirebaseUser user = firebaseAuth.getCurrentUser();
@@ -283,7 +274,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onNetworkConnectionChanged(boolean isConnected) {
-        if(!isConnected){
+        if (!isConnected) {
             changeActivity();
         }
         showSnackBar(isConnected);

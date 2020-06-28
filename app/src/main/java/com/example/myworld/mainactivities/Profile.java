@@ -1,14 +1,12 @@
-package com.example.myworld;
+package com.example.myworld.mainactivities;
 
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.google.android.gms.maps.model.LatLng;
+import com.example.myworld.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -26,7 +24,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -36,7 +33,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -52,7 +48,6 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
     FirebaseUser currentUser;
     DrawerLayout drawerLayout;
     TextView uName;
-    ArrayList<LatLng> latLngArrayList = new ArrayList<>();
 
 
     @Override
@@ -63,10 +58,6 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Intent myIntent = getIntent();
-        if(myIntent!=null) {
-//            latLngArrayList = myIntent.getParcelableArrayListExtra("collection");
-        }
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -123,6 +114,7 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
 
     private void updateProfile() {
 
+
         if (userName.getText().toString().isEmpty() || userEmail.getText().toString().isEmpty()) {
             Toast.makeText(getApplicationContext(), "Empty field", Toast.LENGTH_SHORT).show();
             return;
@@ -131,6 +123,8 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
         currentUser.updateEmail(userEmailEdit).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
+
+
                 documentReference = firebaseFirestore.collection("People").document(userId);
                 Map<String, Object> editedUser = new HashMap<>();
                 editedUser.put("Name", userName.getText().toString());
@@ -141,7 +135,6 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
                     public void onSuccess(Void aVoid) {
                         Toast.makeText(getApplicationContext(), "Profile Updated", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
-//                        intent.putParcelableArrayListExtra("collection", latLngArrayList);
                         startActivity(intent);
                         finish();
                     }
@@ -166,15 +159,11 @@ public class Profile extends AppCompatActivity implements NavigationView.OnNavig
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.nav_about) {
-//            Intent intent = new Intent(this, Profile.class);
-//            startActivity(intent);
-        } else if (id == R.id.nav_upload) {
+
+
+        if (id == R.id.nav_upload) {
             Intent intent = new Intent(this, Upload.class);
             startActivity(intent);
-        } else if (id == R.id.nav_help) {
-//            Intent intent = new Intent(this, Profile.class);
-//            startActivity(intent);
         } else if (id == R.id.nav_logout) {
             FirebaseUser user = firebaseAuth.getCurrentUser();
             if (user != null) {

@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_layout_profile"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:openDrawer="start">
+    tools:openDrawer="start"
+    android:background="#0B0A0A"
+    >
 
 
     <RelativeLayout
@@ -33,9 +36,13 @@
         <EditText
             android:id="@+id/edit_username"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:layout_below="@+id/textView1"
-            android:layout_marginTop="25dp" />
+            android:layout_marginTop="25dp"
+            android:background="@drawable/textview_border"
+            android:textColorHint="#090808"
+            android:textColor="#090808"
+            android:padding="5dp"/>
 
         <TextView
             android:id="@+id/textView2"
@@ -50,19 +57,24 @@
         <EditText
             android:id="@+id/edit_email"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:layout_below="@+id/textView2"
-            android:layout_marginTop="25dp" />
+            android:layout_marginTop="25dp"
+            android:background="@drawable/textview_border"
+            android:textColorHint="#090808"
+            android:textColor="#090808"
+            android:padding="5dp"/>
 
 
         <Button
             android:id="@+id/confirm_button"
-            android:layout_width="wrap_content"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:layout_below="@id/edit_email"
             android:layout_centerInParent="true"
             android:layout_marginVertical="50dp"
-            android:text="CONFIRM" />
+            android:text="CONFIRM"
+            android:background="@drawable/rounded_button"/>
 
 
     </RelativeLayout>

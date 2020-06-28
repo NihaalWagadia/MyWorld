@@ -1,4 +1,4 @@
-package com.example.myworld;
+package com.example.myworld.backendservices;
 
 import android.app.Application;
 
@@ -8,14 +8,14 @@ public class ManualChecker extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        manualChecker= this;
+        manualChecker = this;
     }
 
-    public static synchronized ManualChecker getInstance(){
+    public static synchronized ManualChecker getInstance() {
         return manualChecker;
     }
 
-    public void setConnectivityListener(ConnectionReceiver.ConnectivityReceiverListener listener){
+    public void setConnectivityListener(ConnectionReceiver.ConnectivityReceiverListener listener) {
         ConnectionReceiver.connectivityReceiverListener = listener;
     }
 }
